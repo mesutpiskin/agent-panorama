@@ -1,0 +1,12 @@
+name: Bug report
+description: Report reproducible incorrect behavior without sharing sensitive session content.
+body:
+  - type: textarea
+    attributes: { label: What happened?, description: Include expected and actual behavior. }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: Reproduction, description: List the smallest safe steps to reproduce. }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: Sanitized diagnostics, description: Paste AgentPanorama diagnostics only after reviewing them. }
+

@@ -1,0 +1,9 @@
+name: Feature request
+description: Suggest a focused capability or provider adapter.
+body:
+  - type: textarea
+    attributes: { label: Problem, description: What workflow is difficult today? }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: Proposed behavior, description: Describe observable behavior and privacy constraints. }
+    validations: { required: true }

@@ -1,0 +1,16 @@
+.github/**
+.gitignore
+docs/SPECIFICATION.md
+docs/IMPLEMENTATION.md
+docs/TASKS.md
+docs/PROMPT.md
+src/**
+test/**
+coverage/**
+outputs/**
+node_modules/**
+*.map
+tsconfig.json
+vitest.config.ts
+eslint.config.mjs
+esbuild.mjs

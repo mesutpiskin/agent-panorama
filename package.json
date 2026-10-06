@@ -1,0 +1,87 @@
+{
+  "name": "agent-panorama",
+  "displayName": "AgentPanorama — AI Agent Monitor",
+  "description": "Local-first monitoring for LiteLLM, Claude Code, Codex CLI, and GitHub Copilot.",
+  "version": "1.0.0",
+  "publisher": "mesutpiskin",
+  "author": { "name": "Mesut Piskin", "email": "mesutpiskin@outlook.com" },
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/mesutpiskin/agent-panorama.git" },
+  "bugs": { "url": "https://github.com/mesutpiskin/agent-panorama/issues" },
+  "homepage": "https://github.com/mesutpiskin/agent-panorama#readme",
+  "engines": { "vscode": "^1.99.0" },
+  "categories": ["Other", "Visualization", "Machine Learning"],
+  "keywords": ["ai", "agents", "claude", "codex", "copilot", "litellm", "monitoring", "observability"],
+  "icon": "assets/icon.png",
+  "main": "./dist/extension.js",
+  "activationEvents": ["onView:agentPanorama.sessions", "onCommand:agentPanorama.showDashboard", "onStartupFinished"],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [{ "id": "agentPanorama", "title": "AgentPanorama", "icon": "assets/activity.svg" }]
+    },
+    "views": {
+      "agentPanorama": [{ "id": "agentPanorama.sessions", "name": "Agent Sessions" }]
+    },
+    "commands": [
+      { "command": "agentPanorama.showDashboard", "title": "AgentPanorama: Show Dashboard", "icon": "$(dashboard)" },
+      { "command": "agentPanorama.refresh", "title": "AgentPanorama: Refresh", "icon": "$(refresh)" },
+      { "command": "agentPanorama.showDetails", "title": "AgentPanorama: Show Session Details" },
+      { "command": "agentPanorama.copyEndpoint", "title": "AgentPanorama: Copy Ingestion Endpoint" },
+      { "command": "agentPanorama.copyToken", "title": "AgentPanorama: Copy Ingestion Token" },
+      { "command": "agentPanorama.runDiagnostics", "title": "AgentPanorama: Run Diagnostics" },
+      { "command": "agentPanorama.addDemoSession", "title": "AgentPanorama: Add Demo Session" },
+      { "command": "agentPanorama.clearHistory", "title": "AgentPanorama: Clear History" },
+      { "command": "agentPanorama.openSettings", "title": "AgentPanorama: Open Settings" }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "agentPanorama.refresh", "when": "view == agentPanorama.sessions", "group": "navigation" },
+        { "command": "agentPanorama.addDemoSession", "when": "view == agentPanorama.sessions", "group": "navigation" }
+      ],
+      "view/item/context": [
+        { "command": "agentPanorama.showDetails", "when": "view == agentPanorama.sessions && viewItem == agentPanorama.session", "group": "inline" }
+      ]
+    },
+    "configuration": {
+      "title": "AgentPanorama",
+      "properties": {
+        "agentPanorama.enabled": { "type": "boolean", "default": true, "description": "Enable AgentPanorama monitoring." },
+        "agentPanorama.history.retentionDays": { "type": "integer", "default": 14, "minimum": 1, "maximum": 90, "description": "Days to keep local event history." },
+        "agentPanorama.history.showCompletedHours": { "type": "integer", "default": 24, "minimum": 1, "maximum": 720, "description": "Hours to show completed sessions in the tree." },
+        "agentPanorama.notifications.waiting": { "type": "boolean", "default": true, "description": "Notify when an agent waits for input." },
+        "agentPanorama.notifications.completed": { "type": "boolean", "default": false, "description": "Notify when an agent completes." },
+        "agentPanorama.notifications.failed": { "type": "boolean", "default": true, "description": "Notify when an agent fails." },
+        "agentPanorama.adapters.claude.enabled": { "type": "boolean", "default": true, "description": "Detect Claude Code installations." },
+        "agentPanorama.adapters.codex.enabled": { "type": "boolean", "default": true, "description": "Detect Codex CLI installations." },
+        "agentPanorama.adapters.copilot.enabled": { "type": "boolean", "default": true, "description": "Detect official GitHub Copilot extensions." },
+        "agentPanorama.logLevel": { "type": "string", "enum": ["error", "warn", "info", "debug"], "default": "info", "description": "Output channel verbosity." }
+      }
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist coverage",
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src test",
+    "test": "vitest run --coverage",
+    "check": "npm run typecheck && npm run lint && npm test && npm run build",
+    "package": "npm run build && node -e \"require('fs').mkdirSync('outputs',{recursive:true})\" && vsce package --out outputs/agent-panorama-1.0.0.vsix",
+    "vscode:prepublish": "npm run build"
+  },
+  "dependencies": {
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
+    "@types/vscode": "1.99.1",
+    "@vitest/coverage-v8": "5.0.3",
+    "@vscode/vsce": "4.0.0",
+    "esbuild": "0.28.2",
+    "eslint": "10.12.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.57.1",
+    "vitest": "5.0.3"
+  }
+}
