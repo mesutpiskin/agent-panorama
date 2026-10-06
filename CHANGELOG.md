@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2 — 2026-10-06
+
+- Fixed client windows remaining disconnected after the leader extension host exits.
+- Added automatic leader takeover after a connection failure.
+- Collapsed repeated network failures into one diagnostic warning while recovery retries continue.
+
 ## 1.0.1 — 2026-10-06
 
 - Fixed repeated cross-window HTTP 401 errors caused by per-window token races.

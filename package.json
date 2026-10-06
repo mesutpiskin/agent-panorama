@@ -2,7 +2,7 @@
   "name": "agent-panorama",
   "displayName": "AgentPanorama — AI Agent Monitor",
   "description": "Local-first monitoring for LiteLLM, Claude Code, Codex CLI, and GitHub Copilot.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "mesutpiskin",
   "author": { "name": "Mesut Piskin", "email": "mesutpiskin@outlook.com" },
   "license": "MIT",
@@ -66,7 +66,7 @@
     "lint": "eslint src test",
     "test": "vitest run --coverage",
     "check": "npm run typecheck && npm run lint && npm test && npm run build",
-    "package": "npm run build && node -e \"require('fs').mkdirSync('outputs',{recursive:true})\" && vsce package --out outputs/agent-panorama-1.0.1.vsix",
+    "package": "npm run build && node -e \"require('fs').mkdirSync('outputs',{recursive:true})\" && vsce package --out outputs/agent-panorama-1.0.2.vsix",
     "vscode:prepublish": "npm run build"
   },
   "dependencies": {

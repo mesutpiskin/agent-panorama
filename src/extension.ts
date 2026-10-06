@@ -32,14 +32,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     tree.update(sessions, capabilities); updateStatus(statusBar, sessions);
   };
 
-  server = new MonitorServer(store, token, changed => { void refresh(); notify(changed); });
+  const onSessions = (changed: AgentSession[]): void => { void refresh(); notify(changed); };
+  server = new MonitorServer(store, token, onSessions);
   try {
     info = await server.start(); output.info(`Leader monitor listening on ${info.endpoint} (loopback only).`);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'EADDRINUSE') throw error;
     server = undefined; output.info(`Connected as a client window to ${info.endpoint}.`);
     let authenticationWarningShown = false;
+    let connectionWarningShown = false;
+    let recovering = false;
     const poll = async (): Promise<void> => {
+      if (recovering) return;
       try {
         const response = await fetch(`${info.endpoint}/v1/sessions`, { headers: { Authorization: `Bearer ${token}` } });
         if (response.status === 401) {
@@ -53,8 +57,24 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         }
         if (!response.ok) throw new Error(`Monitor returned HTTP ${response.status}`);
         authenticationWarningShown = false;
+        connectionWarningShown = false;
         const body = await response.json() as { data: AgentSession[] }; remoteSessions = body.data; await refresh();
-      } catch (pollError) { output.warn(`Cross-window monitor unavailable: ${pollError instanceof Error ? pollError.message : 'unknown error'}`); }
+      } catch (pollError) {
+        recovering = true;
+        const candidate = new MonitorServer(store, token, onSessions);
+        try {
+          info = await candidate.start(); server = candidate; remoteSessions = undefined;
+          clearInterval(timer);
+          output.info(`Previous leader disappeared; this window took over monitoring at ${info.endpoint}.`);
+          await refresh();
+        } catch (leadershipError) {
+          if (!connectionWarningShown) {
+            connectionWarningShown = true;
+            output.warn(`Cross-window monitor temporarily unavailable: ${pollError instanceof Error ? pollError.message : 'unknown error'}. Retrying leadership.`);
+          }
+          if ((leadershipError as NodeJS.ErrnoException).code !== 'EADDRINUSE') output.error(`Leadership recovery failed: ${leadershipError instanceof Error ? leadershipError.message : 'unknown error'}`);
+        } finally { recovering = false; }
+      }
     };
     const timer = setInterval(() => { void poll(); }, 5_000); context.subscriptions.push({ dispose: () => clearInterval(timer) }); await poll();
   }
