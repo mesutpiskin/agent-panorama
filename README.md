@@ -7,6 +7,7 @@ AgentPanorama is a local-first VS Code monitor for AI coding sessions. It accept
 ## Features
 
 - One Activity Bar view for LiteLLM, Claude Code, Codex CLI, and available GitHub Copilot capabilities.
+- Automatic discovery of `claude-saka`, `claude-codex`, `claude`, and `codex` processes running inside VS Code integrated terminals.
 - Running, waiting, completed, failed, stopped, and unknown states with explicit confidence.
 - Authenticated loopback ingestion endpoint and SSE updates.
 - Local, bounded history with atomic writes.

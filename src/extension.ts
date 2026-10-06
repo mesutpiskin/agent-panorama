@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
 import { EventStore } from './application/store.js';
 import { detectAdapters } from './adapters/detect.js';
+import { TerminalProcessMonitor } from './adapters/processMonitor.js';
 import { type AgentEvent, type AgentSession, type AdapterCapability } from './domain/model.js';
 import { MonitorServer, type MonitorServerInfo } from './infrastructure/server.js';
 import { loadSharedToken } from './infrastructure/sharedToken.js';
@@ -80,6 +81,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   }
   await refresh();
 
+  const processMonitor = new TerminalProcessMonitor(async events => {
+    const response = await fetch(`${info.endpoint}/v1/events/batch`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(events) });
+    if (!response.ok) throw new Error(`Process event ingestion returned HTTP ${response.status}`);
+  }, output);
+  if (vscode.workspace.getConfiguration('agentPanorama').get<boolean>('adapters.process.enabled', true)) processMonitor.start();
+
   const register = (command: string, callback: (...args: unknown[]) => unknown): void => { context.subscriptions.push(vscode.commands.registerCommand(command, callback)); };
   register('agentPanorama.showDashboard', () => vscode.commands.executeCommand('workbench.view.extension.agentPanorama'));
   register('agentPanorama.refresh', refresh);
@@ -106,7 +113,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     if (answer === 'Delete') { await store.clear(); await refresh(); void vscode.window.showInformationMessage('AgentPanorama history cleared.'); }
   });
 
-  context.subscriptions.push(treeView, statusBar, output, { dispose: () => { void server?.stop(); } });
+  context.subscriptions.push(treeView, statusBar, output, processMonitor, { dispose: () => { void server?.stop(); } });
   if (!context.globalState.get<boolean>('agentPanorama.welcomed')) {
     await context.globalState.update('agentPanorama.welcomed', true);
     const action = await vscode.window.showInformationMessage('AgentPanorama is ready. Connect LiteLLM or another agent through the local ingestion API.', 'Copy endpoint', 'Open README');

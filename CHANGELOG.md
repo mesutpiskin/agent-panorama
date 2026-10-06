@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0 — 2026-10-06
+
+- Added automatic process discovery for `claude-saka`, `claude-codex`, `claude`, and `codex` running in VS Code integrated terminals.
+- Associates detected processes with their VS Code terminal/workspace and reports inferred running/stopped states.
+- Suppresses nested provider processes when a wrapper such as `claude-saka` owns the session.
+
 ## 1.0.2 — 2026-10-06
 
 - Fixed client windows remaining disconnected after the leader extension host exits.
