@@ -63,11 +63,10 @@ Press `F5` in VS Code to launch an Extension Development Host. Run **AgentPanora
 
 ## Privacy and security
 
-The server listens only on `127.0.0.1` using an ephemeral port. Every data route requires a randomly generated bearer token stored in VS Code SecretStorage. AgentPanorama rejects payloads over 1 MiB and does not store prompt bodies, completion bodies, source code, environment variables, command output, or terminal transcripts by design.
+The server listens only on `127.0.0.1`. Every data route requires a randomly generated bearer token shared atomically between local VS Code windows, stored with user-only file permissions, and mirrored into VS Code SecretStorage. AgentPanorama rejects payloads over 1 MiB and does not store prompt bodies, completion bodies, source code, environment variables, command output, or terminal transcripts by design.
 
 ## Contributing
 
 Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) first.
 
 MIT © Mesut Piskin
-

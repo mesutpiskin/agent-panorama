@@ -1,13 +1,13 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
 import { EventStore } from './application/store.js';
 import { detectAdapters } from './adapters/detect.js';
 import { type AgentEvent, type AgentSession, type AdapterCapability } from './domain/model.js';
 import { MonitorServer, type MonitorServerInfo } from './infrastructure/server.js';
+import { loadSharedToken } from './infrastructure/sharedToken.js';
 import { showSessionDetails } from './vscode/detail.js';
 import { SessionsTree } from './vscode/tree.js';
 
-const SECRET_KEY = 'agentPanorama.ingestionToken';
 let server: MonitorServer | undefined;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
@@ -21,8 +21,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const retention = vscode.workspace.getConfiguration('agentPanorama').get<number>('history.retentionDays', 14);
   await store.purge(retention);
   let capabilities: AdapterCapability[] = [];
-  let token = await context.secrets.get(SECRET_KEY);
-  if (!token) { token = randomBytes(32).toString('base64url'); await context.secrets.store(SECRET_KEY, token); }
+  const token = await loadSharedToken(context.globalStorageUri.fsPath);
+  await context.secrets.store('agentPanorama.ingestionToken', token);
 
   let remoteSessions: readonly AgentSession[] | undefined;
   let info: MonitorServerInfo = { port: 39457, endpoint: 'http://127.0.0.1:39457' };
@@ -38,14 +38,25 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'EADDRINUSE') throw error;
     server = undefined; output.info(`Connected as a client window to ${info.endpoint}.`);
+    let authenticationWarningShown = false;
     const poll = async (): Promise<void> => {
       try {
         const response = await fetch(`${info.endpoint}/v1/sessions`, { headers: { Authorization: `Bearer ${token}` } });
+        if (response.status === 401) {
+          if (!authenticationWarningShown) {
+            authenticationWarningShown = true;
+            output.warn('Cross-window monitor rejected this window token. Reload all VS Code windows once to finish the AgentPanorama token migration.');
+            const action = await vscode.window.showWarningMessage('AgentPanorama needs all VS Code windows reloaded once to synchronize monitoring.', 'Reload Window');
+            if (action === 'Reload Window') await vscode.commands.executeCommand('workbench.action.reloadWindow');
+          }
+          return;
+        }
         if (!response.ok) throw new Error(`Monitor returned HTTP ${response.status}`);
+        authenticationWarningShown = false;
         const body = await response.json() as { data: AgentSession[] }; remoteSessions = body.data; await refresh();
       } catch (pollError) { output.warn(`Cross-window monitor unavailable: ${pollError instanceof Error ? pollError.message : 'unknown error'}`); }
     };
-    const timer = setInterval(() => { void poll(); }, 2_000); context.subscriptions.push({ dispose: () => clearInterval(timer) }); await poll();
+    const timer = setInterval(() => { void poll(); }, 5_000); context.subscriptions.push({ dispose: () => clearInterval(timer) }); await poll();
   }
   await refresh();
 
